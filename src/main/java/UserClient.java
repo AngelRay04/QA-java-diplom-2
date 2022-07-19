@@ -1,5 +1,6 @@
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 import org.json.JSONObject;
 
 import static io.restassured.RestAssured.given;
@@ -66,5 +67,14 @@ public class UserClient extends RestAssuredClient {
                 .body(requestBody)
                 .when()
                 .patch(AUTH_PATH + "user/");
+    }
+
+    @Step("Удаление пользователя")
+    public ValidatableResponse deleteUser(String accesstoken) {
+        return given()
+                .headers("Authorization", accesstoken)
+                .spec(getBaseSpec())
+                .delete("auth/user")
+                .then();
     }
 }

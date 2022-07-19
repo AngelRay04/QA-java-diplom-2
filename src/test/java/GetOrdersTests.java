@@ -1,5 +1,6 @@
 import io.qameta.allure.Description;
 import io.restassured.response.Response;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,9 +11,10 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.*;
 
 public class GetOrdersTests {
-    OrderClient orderClient;
-    UserClient userClient;
-    IngredientsClient ingredientsClient;
+    private OrderClient orderClient;
+    private UserClient userClient;
+    private IngredientsClient ingredientsClient;
+    private User userData = User.getRandom();
 
     @Before
     public void setUp() {
@@ -21,12 +23,19 @@ public class GetOrdersTests {
         ingredientsClient = new IngredientsClient();
     }
 
+    @After
+    public void deleteUser() {
+        String accessToken = userClient.create(userData).getBody().path("accessToken");
+        if (accessToken != null) {
+            userClient.deleteUser(accessToken);
+        }
+    }
+
     @Test
     @Description("Получение заказа с авторизацией")
     public void getOrderWithAuthTest() {
-        User userData = User.getRandom();
         String accessToken = userClient.create(userData).getBody().path("accessToken");
-        List<String> ingredients  = ingredientsClient.getIngredients().path("data._id");
+        List<String> ingredients = ingredientsClient.getIngredients().path("data._id");
         orderClient.createOrder(ingredients, accessToken);
         Response response = orderClient.getOrders(accessToken);
         assertEquals(200, response.statusCode());
@@ -37,9 +46,8 @@ public class GetOrdersTests {
     @Test
     @Description("Нельзя получить заказ без авторизации")
     public void getOrderWithoutAuthTest() {
-        User userData = User.getRandom();
         String accessToken = userClient.create(userData).getBody().path("accessToken");
-        List<String> ingredients  = ingredientsClient.getIngredients().path("data._id");
+        List<String> ingredients = ingredientsClient.getIngredients().path("data._id");
         orderClient.createOrder(ingredients, accessToken);
         Response response = orderClient.getOrders("");
         assertEquals(401, response.statusCode());
